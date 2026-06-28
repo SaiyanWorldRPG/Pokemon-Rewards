@@ -1,7 +1,7 @@
 {
   "name": "pokemon-rewards-server",
   "version": "1.0.0",
-  "description": "Servidor HTTP para entregar rewards.json ao jogo",
+  "description": "Servidor de recompensas para o jogo Pokemon",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
