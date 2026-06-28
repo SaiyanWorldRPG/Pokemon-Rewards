@@ -1,14 +1,12 @@
 {
-  "name": "saiyanworld-bot",
+  "name": "pokemon-rewards-server",
   "version": "1.0.0",
-  "description": "Bot do Discord criado por Paulo Henrique",
-  "main": "bot.js",
+  "description": "Servidor HTTP para entregar rewards.json ao jogo",
+  "main": "server.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5",
-    "axios": "^1.6.7"
+    "express": "^4.18.2"
   }
 }
