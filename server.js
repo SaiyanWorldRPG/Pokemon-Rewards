@@ -4,6 +4,7 @@ const app = express();
 
 app.use(express.json());
 
+// Retorna o JSON para o jogo
 app.get("/rewards.json", (req, res) => {
     try {
         const data = fs.readFileSync("rewards.json", "utf8");
@@ -14,6 +15,7 @@ app.get("/rewards.json", (req, res) => {
     }
 });
 
+// Atualiza recompensas (chamado pelo bot)
 app.post("/update", (req, res) => {
     const { playerId, reward } = req.body;
 
