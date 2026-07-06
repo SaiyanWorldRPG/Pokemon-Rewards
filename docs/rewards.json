@@ -19,5 +19,12 @@
       "species": "CHARMANDER",
       "level": 15
     }
+  ],
+  "02444": [
+    {
+      "type": "pokemon",
+      "species": "CHARMANDER",
+      "level": 15
+    }
   ]
 }
