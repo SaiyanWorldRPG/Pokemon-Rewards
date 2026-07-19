@@ -15,7 +15,7 @@ app.get("/rewards.json", (req, res) => {
     }
 });
 
-// Atualiza recompensas (chamado pelo bot)
+// Adiciona recompensa (chamado pelo bot)
 app.post("/update", (req, res) => {
     const { playerId, reward } = req.body;
 
@@ -35,6 +35,30 @@ app.post("/update", (req, res) => {
         res.send({ success: true });
     } catch (err) {
         res.status(500).send({ error: "Erro ao atualizar rewards.json" });
+    }
+});
+
+// LIMPA RECOMPENSAS (chamado pelo jogo)
+app.post("/clear", (req, res) => {
+    const { playerId } = req.body;
+
+    if (!playerId) {
+        return res.status(400).send({ error: "playerId ausente" });
+    }
+
+    try {
+        const data = fs.readFileSync("rewards.json", "utf8");
+        const json = data ? JSON.parse(data) : {};
+
+        if (json[playerId]) {
+            delete json[playerId];
+        }
+
+        fs.writeFileSync("rewards.json", JSON.stringify(json, null, 2));
+
+        res.send({ success: true });
+    } catch (err) {
+        res.status(500).send({ error: "Erro ao limpar recompensas" });
     }
 });
 
