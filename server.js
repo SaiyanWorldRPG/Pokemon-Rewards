@@ -3,7 +3,6 @@ const { Octokit } = require("@octokit/rest");
 const app = express();
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN
@@ -42,30 +41,35 @@ async function saveRewardsJSON(newJSON, sha) {
   }
 }
 
-// Rota /clear alterada para GET para aceitar a chamada via pbDownloadToString do RPG Maker
 app.get("/clear", async (req, res) => {
     const playerId = req.query.playerId;
-    console.log(`-> Rota GET /clear acessada para o ID: ${playerId}`);
+    console.log(`-> Rota GET /clear acessada para o ID: [${playerId}]`);
 
     if (!playerId) {
-        console.log("-> Erro: playerId ausente.");
         return res.status(400).json({ success: false, error: "playerId ausente" });
     }
 
     try {
         const { json, sha } = await getRewardsJSON();
+        
+        // Normaliza o ID procurado (remove espaços ou formatações extras)
+        const targetId = String(playerId).trim();
+        
+        // Procura a chave independentemente de como ela esteja salva no JSON
+        let foundKey = Object.keys(json).find(k => String(k).trim() === targetId);
 
-        if (json[playerId]) {
-            delete json[playerId];
+        if (foundKey) {
+            delete json[foundKey];
             const success = await saveRewardsJSON(json, sha);
             if (success) {
-                console.log(`-> Recompensas limpas com sucesso para o jogador: ${playerId}`);
+                console.log(`-> Recompensas limpas com sucesso para a chave: ${foundKey}`);
                 return res.json({ success: true, message: "Removido com sucesso" });
             }
+        } else {
+            console.log(`-> Aviso: A chave ${targetId} não foi localizada nas chaves existentes:`, Object.keys(json));
         }
 
-        console.log(`-> ID ${playerId} não encontrado para limpar.`);
-        return res.json({ success: true, message: "ID não encontrado, mas ignorado" });
+        return res.json({ success: true, message: "ID não encontrado no objeto" });
     } catch (err) {
         console.error("-> Erro ao limpar recompensas:", err);
         return res.status(500).json({ success: false, error: "Erro interno" });
