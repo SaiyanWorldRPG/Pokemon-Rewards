@@ -4,6 +4,11 @@
       "type": "pokemon",
       "species": "CHARMANDER",
       "level": 15
+    },
+    {
+      "type": "pokemon",
+      "species": "POTION",
+      "level": 5
     }
   ],
   "61281": [
