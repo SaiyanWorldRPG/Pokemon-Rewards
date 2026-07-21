@@ -1,6 +1,3 @@
-// =============================================================================
-// SERVER.JS - INTEGRADO COM GITHUB API E O JOGO
-// =============================================================================
 const express = require("express");
 const { Octokit } = require("@octokit/rest");
 const app = express();
@@ -8,7 +5,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// GitHub API
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN
 });
@@ -17,14 +13,9 @@ const owner = process.env.GITHUB_USER;
 const repo = process.env.GITHUB_REPO;
 const filePath = "docs/rewards.json";
 
-// Função auxiliar para baixar do GitHub
 async function getRewardsJSON() {
   try {
-    const res = await octokit.repos.getContent({
-      owner,
-      repo,
-      path: filePath
-    });
+    const res = await octokit.repos.getContent({ owner, repo, path: filePath });
     const content = Buffer.from(res.data.content, "base64").toString("utf8");
     return { json: JSON.parse(content), sha: res.data.sha };
   } catch (err) {
@@ -33,7 +24,6 @@ async function getRewardsJSON() {
   }
 }
 
-// Função auxiliar para salvar no GitHub
 async function saveRewardsJSON(newJSON, sha) {
   try {
     const contentEncoded = Buffer.from(JSON.stringify(newJSON, null, 2)).toString("base64");
@@ -41,7 +31,7 @@ async function saveRewardsJSON(newJSON, sha) {
       owner,
       repo,
       path: filePath,
-      message: "Atualizar recompensas via Servidor/Bot",
+      message: "Atualizar recompensas via Servidor",
       content: contentEncoded,
       sha
     });
@@ -52,16 +42,14 @@ async function saveRewardsJSON(newJSON, sha) {
   }
 }
 
-// -----------------------------------------------------------
-// LIMPA RECOMPENSAS (Chamado pelo jogo)
-// -----------------------------------------------------------
+// Rota /clear universal (aceita req.body de qualquer formato)
 app.post("/clear", async (req, res) => {
-    console.log("-> ROTA /CLEAR ACESSADA! Dados recebidos:", req.body);
+    console.log("-> ROTA /CLEAR ACESSADA! Body recebido:", req.body);
     
     const playerId = req.body && req.body.playerId;
 
     if (!playerId) {
-        console.log("-> Erro: playerId veio ausente.");
+        console.log("-> Erro: playerId veio vazio.");
         return res.status(400).json({ error: "playerId ausente" });
     }
 
@@ -75,10 +63,9 @@ app.post("/clear", async (req, res) => {
                 console.log(`-> Recompensas limpas com sucesso para o jogador: ${playerId}`);
                 return res.json({ success: true });
             }
-        } else {
-            console.log(`-> ID ${playerId} não foi encontrado no rewards.json.`);
         }
 
+        console.log(`-> ID ${playerId} não encontrado para limpar.`);
         return res.json({ success: true });
     } catch (err) {
         console.error("-> Erro ao limpar recompensas:", err);
