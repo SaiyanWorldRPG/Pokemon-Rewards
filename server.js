@@ -42,10 +42,10 @@ async function saveRewardsJSON(newJSON, sha) {
   }
 }
 
-app.post("/clear", async (req, res) => {
-    console.log("-> ROTA /CLEAR ACESSADA! Body:", req.body);
-    
-    const playerId = req.body && req.body.playerId;
+// Rota /clear alterada para GET para aceitar a chamada via pbDownloadToString do RPG Maker
+app.get("/clear", async (req, res) => {
+    const playerId = req.query.playerId;
+    console.log(`-> Rota GET /clear acessada para o ID: ${playerId}`);
 
     if (!playerId) {
         console.log("-> Erro: playerId ausente.");
@@ -60,12 +60,12 @@ app.post("/clear", async (req, res) => {
             const success = await saveRewardsJSON(json, sha);
             if (success) {
                 console.log(`-> Recompensas limpas com sucesso para o jogador: ${playerId}`);
-                return res.status(200).json({ success: true, message: "Removido com sucesso" });
+                return res.json({ success: true, message: "Removido com sucesso" });
             }
         }
 
         console.log(`-> ID ${playerId} não encontrado para limpar.`);
-        return res.status(200).json({ success: true, message: "ID não encontrado, mas ignorado" });
+        return res.json({ success: true, message: "ID não encontrado, mas ignorado" });
     } catch (err) {
         console.error("-> Erro ao limpar recompensas:", err);
         return res.status(500).json({ success: false, error: "Erro interno" });
