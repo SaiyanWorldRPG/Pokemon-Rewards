@@ -1,20 +1,4 @@
 {
-  "54596": [
-    {
-      "type": "pokemon",
-      "species": "CHARMANDER",
-      "level": 15
-    },
-    {
-      "type": "coins",
-      "amount": 100
-    },
-    {
-      "type": "item",
-      "item": "POTION",
-      "qty": 5
-    }
-  ],
   "61281": [
     {
       "type": "pokemon",
