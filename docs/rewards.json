@@ -24,5 +24,12 @@
       "species": "CHARMANDER",
       "level": 15
     }
+  ],
+  "coins": [
+    {
+      "type": "pokemon",
+      "species": "54596",
+      "level": 100
+    }
   ]
 }
