@@ -9,6 +9,10 @@
       "type": "pokemon",
       "species": "POTION",
       "level": 5
+    },
+    {
+      "type": "coins",
+      "amount": 100
     }
   ],
   "61281": [
