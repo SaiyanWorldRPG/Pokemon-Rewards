@@ -1,75 +1,80 @@
+// =============================================================================
+// SERVER.JS - INTEGRADO COM GITHUB API E O JOGO
+// =============================================================================
 const express = require("express");
-const fs = require("fs");
+const { Octokit } = require("@octokit/rest");
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Necessário para aceitar o pbPostToString do RPG Maker
 
-// Retorna o JSON limpo para o jogo (Usa res.json em vez de res.send de string)
-app.get("/rewards.json", (req, res) => {
-    try {
-        if (!fs.existsSync("rewards.json")) {
-            return res.json({});
-        }
-        const data = fs.readFileSync("rewards.json", "utf8");
-        const json = data ? JSON.parse(data) : {};
-        res.json(json);
-    } catch (err) {
-        console.error("Erro ao ler rewards.json:", err);
-        res.status(500).json({ error: "Erro ao ler rewards.json" });
-    }
+// GitHub API
+const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN
 });
 
-// Adiciona recompensa (chamado pelo bot)
-app.post("/update", (req, res) => {
-    const { playerId, reward } = req.body;
+const owner = process.env.GITHUB_USER;
+const repo = process.env.GITHUB_REPO;
+const filePath = "docs/rewards.json";
 
-    if (!playerId || !reward) {
-        return res.status(400).json({ error: "Dados inválidos" });
-    }
+// Função auxiliar para baixar do GitHub
+async function getRewardsJSON() {
+  try {
+    const res = await octokit.repos.getContent({
+      owner,
+      repo,
+      path: filePath
+    });
+    const content = Buffer.from(res.data.content, "base64").toString("utf8");
+    return { json: JSON.parse(content), sha: res.data.sha };
+  } catch (err) {
+    console.error("Erro ao baixar rewards.json do GitHub:", err);
+    return { json: {}, sha: null };
+  }
+}
 
-    try {
-        let json = {};
-        if (fs.existsSync("rewards.json")) {
-            const data = fs.readFileSync("rewards.json", "utf8");
-            json = data ? JSON.parse(data) : {};
-        }
+// Função auxiliar para salvar no GitHub
+async function saveRewardsJSON(newJSON, sha) {
+  try {
+    const contentEncoded = Buffer.from(JSON.stringify(newJSON, null, 2)).toString("base64");
+    await octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path: filePath,
+      message: "Atualizar recompensas via Servidor/Bot",
+      content: contentEncoded,
+      sha
+    });
+    return true;
+  } catch (err) {
+    console.error("Erro ao salvar rewards.json no GitHub:", err);
+    return false;
+  }
+}
 
-        if (!json[playerId]) json[playerId] = [];
-        json[playerId].push(reward);
-
-        fs.writeFileSync("rewards.json", JSON.stringify(json, null, 2));
-        console.log(`Recompensa adicionada para o jogador: ${playerId}`);
-
-        res.json({ success: true });
-    } catch (err) {
-        console.error("Erro ao atualizar rewards.json:", err);
-        res.status(500).json({ error: "Erro ao atualizar rewards.json" });
-    }
-});
-
-// LIMPA RECOMPENSAS (chamado pelo jogo)
-app.post("/clear", (req, res) => {
-    const { playerId } = req.body;
+// -----------------------------------------------------------
+// LIMPA RECOMPENSAS (Chamado pelo jogo via pbPostToString)
+// -----------------------------------------------------------
+app.post("/clear", async (req, res) => {
+    const playerId = req.body.playerId;
 
     if (!playerId) {
         return res.status(400).json({ error: "playerId ausente" });
     }
 
     try {
-        if (!fs.existsSync("rewards.json")) {
-            return res.json({ success: true });
-        }
-
-        const data = fs.readFileSync("rewards.json", "utf8");
-        const json = data ? JSON.parse(data) : {};
+        const { json, sha } = await getRewardsJSON();
 
         if (json[playerId]) {
             delete json[playerId];
-            fs.writeFileSync("rewards.json", JSON.stringify(json, null, 2));
-            console.log(`Recompensas limpas/deletadas para o jogador: ${playerId}`);
+            const success = await saveRewardsJSON(json, sha);
+            if (success) {
+                console.log(`Recompensas limpas com sucesso para o jogador: ${playerId}`);
+                return res.json({ success: true });
+            }
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     } catch (err) {
         console.error("Erro ao limpar recompensas:", err);
         res.status(500).json({ error: "Erro ao limpar recompensas" });
@@ -77,5 +82,5 @@ app.post("/clear", (req, res) => {
 });
 
 app.listen(process.env.PORT || 3000, () => {
-    console.log("Servidor de recompensas ativo!");
+    console.log("Servidor web de recompensas ativo!");
 });
