@@ -43,7 +43,7 @@ async function saveRewardsJSON(newJSON, sha) {
 
 app.get("/clear", async (req, res) => {
     const playerId = req.query.playerId;
-    console.log(`-> Rota GET /clear acessada para o ID: [${playerId}]`);
+    console.log(`-> Rota GET /clear acessada para o ID bruto: [${playerId}]`);
 
     if (!playerId) {
         return res.status(400).json({ success: false, error: "playerId ausente" });
@@ -52,24 +52,34 @@ app.get("/clear", async (req, res) => {
     try {
         const { json, sha } = await getRewardsJSON();
         
-        // Normaliza o ID procurado (remove espaços ou formatações extras)
-        const targetId = String(playerId).trim();
+        // Limpa o ID recebido de qualquer espaço ou caractere oculto
+        const targetId = String(playerId).replace(/\D/g, ""); // Mantém apenas os números
+        console.log(`-> ID limpo para busca: [${targetId}]`);
+        console.log(`-> Chaves atuais no JSON do GitHub:`, Object.keys(json));
+
+        let foundKey = null;
         
-        // Procura a chave independentemente de como ela esteja salva no JSON
-        let foundKey = Object.keys(json).find(k => String(k).trim() === targetId);
+        // Varre as chaves limpando caracteres invisíveis (como non-breaking spaces \u00A0)
+        for (const key of Object.keys(json)) {
+            const cleanKey = String(key).replace(/\u00A0/g, "").replace(/\D/g, "").trim();
+            if (cleanKey === targetId) {
+                foundKey = key;
+                break;
+            }
+        }
 
         if (foundKey) {
             delete json[foundKey];
             const success = await saveRewardsJSON(json, sha);
             if (success) {
-                console.log(`-> Recompensas limpas com sucesso para a chave: ${foundKey}`);
+                console.log(`-> Recompensas limpas com sucesso para a chave real: "${foundKey}"`);
                 return res.json({ success: true, message: "Removido com sucesso" });
             }
         } else {
-            console.log(`-> Aviso: A chave ${targetId} não foi localizada nas chaves existentes:`, Object.keys(json));
+            console.log(`-> O ID ${targetId} não casou com nenhuma chave limpa do objeto.`);
         }
 
-        return res.json({ success: true, message: "ID não encontrado no objeto" });
+        return res.json({ success: true, message: "ID não encontrado após limpeza de caracteres" });
     } catch (err) {
         console.error("-> Erro ao limpar recompensas:", err);
         return res.status(500).json({ success: false, error: "Erro interno" });
