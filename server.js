@@ -42,15 +42,14 @@ async function saveRewardsJSON(newJSON, sha) {
   }
 }
 
-// Rota /clear universal (aceita req.body de qualquer formato)
 app.post("/clear", async (req, res) => {
-    console.log("-> ROTA /CLEAR ACESSADA! Body recebido:", req.body);
+    console.log("-> ROTA /CLEAR ACESSADA! Body:", req.body);
     
     const playerId = req.body && req.body.playerId;
 
     if (!playerId) {
-        console.log("-> Erro: playerId veio vazio.");
-        return res.status(400).json({ error: "playerId ausente" });
+        console.log("-> Erro: playerId ausente.");
+        return res.status(400).json({ success: false, error: "playerId ausente" });
     }
 
     try {
@@ -61,15 +60,15 @@ app.post("/clear", async (req, res) => {
             const success = await saveRewardsJSON(json, sha);
             if (success) {
                 console.log(`-> Recompensas limpas com sucesso para o jogador: ${playerId}`);
-                return res.json({ success: true });
+                return res.status(200).json({ success: true, message: "Removido com sucesso" });
             }
         }
 
         console.log(`-> ID ${playerId} não encontrado para limpar.`);
-        return res.json({ success: true });
+        return res.status(200).json({ success: true, message: "ID não encontrado, mas ignorado" });
     } catch (err) {
         console.error("-> Erro ao limpar recompensas:", err);
-        return res.status(500).json({ error: "Erro ao limpar recompensas" });
+        return res.status(500).json({ success: false, error: "Erro interno" });
     }
 });
 
