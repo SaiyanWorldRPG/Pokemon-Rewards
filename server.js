@@ -6,7 +6,7 @@ const { Octokit } = require("@octokit/rest");
 const app = express();
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Necessário para aceitar o pbPostToString do RPG Maker
+app.use(express.urlencoded({ extended: true }));
 
 // GitHub API
 const octokit = new Octokit({
@@ -53,12 +53,15 @@ async function saveRewardsJSON(newJSON, sha) {
 }
 
 // -----------------------------------------------------------
-// LIMPA RECOMPENSAS (Chamado pelo jogo via pbPostToString)
+// LIMPA RECOMPENSAS (Chamado pelo jogo)
 // -----------------------------------------------------------
 app.post("/clear", async (req, res) => {
-    const playerId = req.body.playerId;
+    console.log("-> ROTA /CLEAR ACESSADA! Dados recebidos:", req.body);
+    
+    const playerId = req.body && req.body.playerId;
 
     if (!playerId) {
+        console.log("-> Erro: playerId veio ausente.");
         return res.status(400).json({ error: "playerId ausente" });
     }
 
@@ -69,15 +72,17 @@ app.post("/clear", async (req, res) => {
             delete json[playerId];
             const success = await saveRewardsJSON(json, sha);
             if (success) {
-                console.log(`Recompensas limpas com sucesso para o jogador: ${playerId}`);
+                console.log(`-> Recompensas limpas com sucesso para o jogador: ${playerId}`);
                 return res.json({ success: true });
             }
+        } else {
+            console.log(`-> ID ${playerId} não foi encontrado no rewards.json.`);
         }
 
         return res.json({ success: true });
     } catch (err) {
-        console.error("Erro ao limpar recompensas:", err);
-        res.status(500).json({ error: "Erro ao limpar recompensas" });
+        console.error("-> Erro ao limpar recompensas:", err);
+        return res.status(500).json({ error: "Erro ao limpar recompensas" });
     }
 });
 
