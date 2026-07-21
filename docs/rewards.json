@@ -30,6 +30,11 @@
       "type": "pokemon",
       "species": "54596",
       "level": 100
+    },
+    {
+      "type": "pokemon",
+      "species": "54596",
+      "level": 100
     }
   ]
 }
